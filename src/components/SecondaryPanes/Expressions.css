@@ -63,8 +63,13 @@
   position: relative;
 }
 
-.expression-container .close-btn {
-  display: none;
+.expression-content .tree {
+  overflow-x: hidden;
+  max-width: calc(100% - var(--breakpoint-expression-right-clear-space));
+}
+
+.expression-content .tree-node {
+  overflow-x: hidden;
 }
 
 .expression-container:hover .close-btn {
@@ -73,18 +78,4 @@
 
 .expression-input {
   max-width: 50%;
-}
-
-.expression-separator {
-  padding: 0px 5px;
-}
-
-.expression-value {
-  overflow-x: scroll;
-  color: var(--theme-content-color2);
-  max-width: 50% !important;
-}
-
-.expression-error {
-  color: var(--theme-highlight-red);
 }

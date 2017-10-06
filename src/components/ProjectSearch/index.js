@@ -1,6 +1,7 @@
 // @flow
 
-import React, { PropTypes, Component } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import actions from "../../actions";
@@ -155,11 +156,9 @@ class ProjectSearch extends Component {
 
     return (
       <div className="search-container">
-        {this.isProjectSearchEnabled() ? (
-          this.renderTextSearch()
-        ) : (
-          this.renderSourceSearch()
-        )}
+        {this.isProjectSearchEnabled()
+          ? this.renderTextSearch()
+          : this.renderSourceSearch()}
       </div>
     );
   }
@@ -182,8 +181,6 @@ ProjectSearch.propTypes = {
 ProjectSearch.contextTypes = {
   shortcuts: PropTypes.object
 };
-
-ProjectSearch.displayName = "ProjectSearch";
 
 export default connect(
   state => ({

@@ -25,7 +25,6 @@ class Breakpoint extends Component {
   props: {
     breakpoint: Object,
     selectedSource: Object,
-    line: number,
     editor: Object
   };
 
@@ -123,7 +122,5 @@ class Breakpoint extends Component {
     return null;
   }
 }
-
-Breakpoint.displayName = "Breakpoint";
 
 export default Breakpoint;

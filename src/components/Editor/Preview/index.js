@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
-import debounce from "lodash/debounce";
+import { debounce } from "lodash";
 
 import Popup from "./Popup";
 
@@ -105,8 +105,6 @@ class Preview extends PureComponent {
     );
   }
 }
-
-Preview.displayName = "Preview";
 
 export default connect(
   state => ({

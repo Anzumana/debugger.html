@@ -30,8 +30,13 @@ type Props = {
   onClose: () => void,
   range: EditorRange,
   editor: any,
-  selectSourceURL: (string, Object) => void
+  selectSourceURL: (string, Object) => void,
+  openLink: string => void
 };
+
+function isReactComponent(roots) {
+  return roots.some(root => root.name === "_reactInternalInstance");
+}
 
 export class Popup extends Component {
   marker: any;
@@ -95,28 +100,39 @@ export class Popup extends Component {
   }
 
   renderObjectPreview(expression: string, root: Object) {
-    return (
-      <div className="preview-popup">{this.renderObjectInspector(root)}</div>
-    );
-  }
-
-  renderSimplePreview(value: Object) {
-    return (
-      <div className="preview-popup">
-        {Rep({ object: value, mode: MODE.LONG })}
-      </div>
-    );
-  }
-
-  renderObjectInspector(root: Object) {
-    const { loadObjectProperties, loadedObjects } = this.props;
-
+    const { loadedObjects } = this.props;
     const getObjectProperties = id => loadedObjects[id];
-    const roots = this.getChildren(root, getObjectProperties);
+    let roots = this.getChildren(root, getObjectProperties);
 
     if (!roots) {
       return null;
     }
+
+    if (isReactComponent(roots)) {
+      roots = roots.filter(r => ["state", "props"].includes(r.name));
+    }
+
+    return (
+      <div className="preview-popup">{this.renderObjectInspector(roots)}</div>
+    );
+  }
+
+  renderSimplePreview(value: Object) {
+    const { openLink } = this.props;
+    return (
+      <div className="preview-popup">
+        {Rep({
+          object: value,
+          mode: MODE.LONG,
+          openLink
+        })}
+      </div>
+    );
+  }
+
+  renderObjectInspector(roots: Object) {
+    const { loadObjectProperties, loadedObjects, openLink } = this.props;
+    const getObjectProperties = id => loadedObjects[id];
 
     return (
       <ObjectInspector
@@ -124,6 +140,7 @@ export class Popup extends Component {
         autoExpandDepth={0}
         disableWrap={true}
         disabledFocus={true}
+        openLink={openLink}
         getObjectProperties={getObjectProperties}
         loadObjectProperties={loadObjectProperties}
         // TODO: See https://github.com/devtools-html/debugger.html/issues/3555.
@@ -178,7 +195,10 @@ export class Popup extends Component {
 
   getPreviewType(value: any) {
     if (
+      typeof value == "number" ||
       typeof value == "boolean" ||
+      (typeof value == "string" && value.length < 10) ||
+      (typeof value == "number" && value.toString().length < 10) ||
       value.type == "null" ||
       value.type == "undefined" ||
       value.class === "Function"
@@ -191,7 +211,6 @@ export class Popup extends Component {
 
   render() {
     const { popoverPos, onClose, value, expression } = this.props;
-
     const type = this.getPreviewType(value);
 
     return (
@@ -201,8 +220,6 @@ export class Popup extends Component {
     );
   }
 }
-
-Popup.displayName = "Popup";
 
 export default connect(
   state => ({

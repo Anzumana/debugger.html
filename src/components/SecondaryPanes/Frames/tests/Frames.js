@@ -1,8 +1,7 @@
 import React from "react";
 import { shallow } from "enzyme";
 import { Map } from "immutable";
-import _Frames, { getAndProcessFrames } from "../index.js";
-const Frames = React.createFactory(_Frames.WrappedComponent);
+import Frames, { getAndProcessFrames } from "../index.js";
 
 function render(overrides = {}) {
   const defaultProps = {
@@ -16,7 +15,7 @@ function render(overrides = {}) {
   };
 
   const props = Object.assign({}, defaultProps, overrides);
-  const component = shallow(new Frames(props));
+  const component = shallow(<Frames.WrappedComponent {...props} />);
 
   return component;
 }
@@ -58,11 +57,11 @@ describe("Frames", () => {
       const getToggleBtn = () => component.find(".show-more");
       const getFrames = () => component.find("FrameComponent");
 
-      expect(getToggleBtn().text()).toEqual("Expand Rows");
+      expect(getToggleBtn().text()).toEqual("Expand rows");
       expect(getFrames().length).toEqual(7);
 
       getToggleBtn().simulate("click");
-      expect(getToggleBtn().text()).toEqual("Collapse Rows");
+      expect(getToggleBtn().text()).toEqual("Collapse rows");
       expect(getFrames().length).toEqual(10);
       expect(component).toMatchSnapshot();
     });

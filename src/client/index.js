@@ -23,7 +23,10 @@ function getClient(connection: any) {
   return clientType == "firefox" ? firefox : chrome;
 }
 
-async function onConnect(connection: Object, services: Object) {
+async function onConnect(
+  connection: Object,
+  { services, toolboxActions }: Object
+) {
   // NOTE: the landing page does not connect to a JS process
   if (!connection) {
     return;
@@ -31,10 +34,13 @@ async function onConnect(connection: Object, services: Object) {
 
   const client = getClient(connection);
   const commands = client.clientCommands;
-  const { store, actions, selectors } = bootstrapStore(commands, services);
+  const { store, actions, selectors } = bootstrapStore(commands, {
+    services,
+    toolboxActions
+  });
 
   bootstrapWorkers();
-  await client.onConnect(connection, actions);
+  const { bpClients } = await client.onConnect(connection, actions);
   await loadFromPrefs(actions);
 
   window.getGlobalsForTesting = () => {
@@ -45,7 +51,9 @@ async function onConnect(connection: Object, services: Object) {
       client: client.clientCommands,
       prefs,
       features,
-      connection
+      connection,
+      bpClients,
+      services
     };
   };
 

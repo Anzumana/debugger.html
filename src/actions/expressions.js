@@ -1,12 +1,15 @@
 // @flow
 
+import {
+  getExpression,
+  getExpressions,
+  getSelectedFrameId
+} from "../selectors";
 import { PROMISE } from "../utils/redux/middleware/promise";
-import { getExpression, getExpressions, getSelectedFrame } from "../selectors";
-
+import { wrapExpression } from "../utils/expressions";
+import * as parser from "../workers/parser";
 import type { Expression } from "../types";
 import type { ThunkArgs } from "./types";
-
-type frameIdType = string | null;
 
 /**
  * Add expression for debugger to watch
@@ -24,11 +27,7 @@ export function addExpression(input: string) {
 
     const expression = getExpression(getState(), input);
     if (expression) {
-      return dispatch({
-        type: "UPDATE_EXPRESSION",
-        expression,
-        input
-      });
+      return dispatch(evaluateExpression(expression));
     }
 
     dispatch({
@@ -36,9 +35,8 @@ export function addExpression(input: string) {
       input
     });
 
-    const selectedFrame = getSelectedFrame(getState());
-    const selectedFrameId = selectedFrame ? selectedFrame.id : null;
-    dispatch(evaluateExpression({ input }, selectedFrameId));
+    const newExpression = getExpression(getState(), input);
+    dispatch(evaluateExpression(newExpression));
   };
 }
 
@@ -54,9 +52,7 @@ export function updateExpression(input: string, expression: Expression) {
       input: input
     });
 
-    const selectedFrame = getSelectedFrame(getState());
-    const selectedFrameId = selectedFrame ? selectedFrame.id : null;
-    dispatch(evaluateExpressions(selectedFrameId));
+    dispatch(evaluateExpressions());
   };
 }
 
@@ -82,30 +78,36 @@ export function deleteExpression(expression: Expression) {
  * @param {number} selectedFrameId
  * @static
  */
-export function evaluateExpressions(frameId: frameIdType) {
+export function evaluateExpressions() {
   return async function({ dispatch, getState, client }: ThunkArgs) {
     const expressions = getExpressions(getState()).toJS();
-    if (!frameId) {
-      const selectedFrame = getSelectedFrame(getState());
-      frameId = selectedFrame ? selectedFrame.id : null;
-    }
     for (const expression of expressions) {
-      await dispatch(evaluateExpression(expression, frameId));
+      await dispatch(evaluateExpression(expression));
     }
   };
 }
 
-function evaluateExpression(expression, frameId: frameIdType) {
-  return function({ dispatch, getState, client }: ThunkArgs) {
+function evaluateExpression(expression: Expression) {
+  return async function({ dispatch, getState, client }: ThunkArgs) {
     if (!expression.input) {
       console.warn("Expressions should not be empty");
       return;
     }
 
+    const error = await parser.hasSyntaxError(expression.input);
+    if (error) {
+      return dispatch({
+        type: "EVALUATE_EXPRESSION",
+        input: expression.input,
+        value: { input: expression.input, result: error }
+      });
+    }
+
+    const frameId = getSelectedFrameId(getState());
     return dispatch({
       type: "EVALUATE_EXPRESSION",
       input: expression.input,
-      [PROMISE]: client.evaluate(expression.input, { frameId })
+      [PROMISE]: client.evaluate(wrapExpression(expression.input), { frameId })
     });
   };
 }

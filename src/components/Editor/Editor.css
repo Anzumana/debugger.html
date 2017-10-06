@@ -22,16 +22,6 @@
   --theme-conditional-breakpoint-color: var(--theme-body-color);
 }
 
-.paused .in-scope .CodeMirror-line,
-.paused .in-scope .CodeMirror-linenumber {
-  opacity: 1;
-}
-
-.paused .CodeMirror-line,
-.paused .CodeMirror-linenumber {
-  opacity: 0.7;
-}
-
 /**
  * There's a known codemirror flex issue with chrome that this addresses.
  * BUG https://github.com/devtools-html/debugger.html/issues/63
@@ -40,7 +30,7 @@
   position: absolute;
   height: calc(100% - 31px);
   width: calc(100% - 1.5px);
-  top: 30px;
+  top: 29px;
   left: 0px;
   --editor-footer-height: 24px;
 }
@@ -196,25 +186,6 @@ html[dir="rtl"] .editor-mount {
   100% {
     background-color: transparent;
   }
-}
-
-.welcomebox {
-  width: calc(100% - 1px);
-
-  /* Offsetting it by 30px for the sources-header area */
-  height: calc(100% - 30px);
-  position: absolute;
-  top: 30px;
-  left: 0;
-  padding: 50px 0;
-  text-align: center;
-  font-size: 1.25em;
-  color: var(--theme-comment-alt);
-  background-color: var(--theme-tab-toolbar-background);
-  font-weight: lighter;
-  z-index: 100;
-  -moz-user-select: none;
-  user-select: none;
 }
 
 .CodeMirror-guttermarker-subtle {

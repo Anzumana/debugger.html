@@ -146,6 +146,12 @@ function update(state: PauseState = State(), action: Action): PauseState {
     case "CLEAR_COMMAND":
       return { ...state, command: "" };
 
+    case "EVALUATE_EXPRESSION":
+      return {
+        ...state,
+        command: action.status === "start" ? "expression" : ""
+      };
+
     case "NAVIGATE":
       return { ...state, debuggeeUrl: action.url };
   }
@@ -180,6 +186,27 @@ export function isStepping(state: OuterState) {
   return ["stepIn", "stepOver", "stepOut"].includes(state.pause.command);
 }
 
+export function isPaused(state: OuterState) {
+  return !!getPause(state);
+}
+
+export function isEvaluatingExpression(state: OuterState) {
+  return state.pause.command === "expression";
+}
+
+export function pausedInEval(state: OuterState) {
+  if (!state.pause.pause) {
+    return false;
+  }
+
+  const exception = state.pause.pause.why.exception;
+  if (!exception) {
+    return false;
+  }
+
+  return exception.preview.fileName === "debugger eval code";
+}
+
 export function getLoadedObject(state: OuterState, objectId: string) {
   return getLoadedObjects(state)[objectId];
 }
@@ -208,9 +235,12 @@ export function getFrameScopes(state: OuterState, frameId: string) {
   return state.pause.frameScopes[frameId];
 }
 
-const getSelectedFrameId = createSelector(getPauseState, pauseWrapper => {
-  return pauseWrapper.selectedFrameId;
-});
+export const getSelectedFrameId = createSelector(
+  getPauseState,
+  pauseWrapper => {
+    return pauseWrapper.selectedFrameId;
+  }
+);
 
 export const getSelectedFrame = createSelector(
   getSelectedFrameId,

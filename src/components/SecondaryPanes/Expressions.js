@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import actions from "../../actions";
 import { getExpressions, getLoadedObjects, getPause } from "../../selectors";
+import { getValue } from "../../utils/expressions";
 
 import CloseButton from "../shared/Button/Close";
 import { ObjectInspector } from "devtools-reps";
@@ -12,42 +13,6 @@ import "./Expressions.css";
 
 import type { List } from "immutable";
 import type { Expression } from "../../types";
-
-function getValue(expression) {
-  const value = expression.value;
-  if (!value) {
-    return {
-      path: expression.from,
-      value: "<not available>"
-    };
-  }
-
-  if (value.exception) {
-    return {
-      path: value.from,
-      value: value.exception
-    };
-  }
-
-  if (value.error) {
-    return {
-      path: value.from,
-      value: value.error
-    };
-  }
-
-  if (typeof value.result == "object") {
-    return {
-      path: value.result.actor,
-      value: value.result
-    };
-  }
-
-  return {
-    path: value.input,
-    value: value.result
-  };
-}
 
 class Expressions extends PureComponent {
   _input: null | any;
@@ -65,7 +30,8 @@ class Expressions extends PureComponent {
     updateExpression: (string, Expression) => void,
     deleteExpression: Expression => void,
     loadObjectProperties: () => void,
-    loadedObjects: Map<string, any>
+    loadedObjects: Map<string, any>,
+    openLink: (url: string) => void
   };
 
   constructor(...args) {
@@ -140,7 +106,7 @@ class Expressions extends PureComponent {
   }
 
   renderExpression(expression) {
-    const { loadObjectProperties, loadedObjects } = this.props;
+    const { loadObjectProperties, loadedObjects, openLink } = this.props;
     const { editing } = this.state;
     const { input, updating } = expression;
 
@@ -152,20 +118,16 @@ class Expressions extends PureComponent {
       return;
     }
 
-    let { value, path } = getValue(expression);
-
-    if (value.class == "Error") {
-      value = { unavailable: true };
-    }
+    const { value } = getValue(expression);
 
     const root = {
       name: expression.input,
-      path,
+      path: input,
       contents: { value }
     };
 
     return (
-      <li className="expression-container" key={`${path}/${input}`}>
+      <li className="expression-container" key={input}>
         <div className="expression-content">
           <ObjectInspector
             roots={[root]}
@@ -174,6 +136,7 @@ class Expressions extends PureComponent {
             disabledFocus={true}
             onDoubleClick={(items, options) =>
               this.editExpression(expression, options)}
+            openLink={openLink}
             getObjectProperties={id => loadedObjects[id]}
             loadObjectProperties={loadObjectProperties}
             // TODO: See https://github.com/devtools-html/debugger.html/issues/3555.
@@ -235,8 +198,6 @@ class Expressions extends PureComponent {
     );
   }
 }
-
-Expressions.displayName = "Expressions";
 
 export default connect(
   state => ({

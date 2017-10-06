@@ -1,7 +1,7 @@
-import React, { Component, PropTypes } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import classnames from "classnames";
 
-import { escapeRegExp } from "lodash";
 import Svg from "../shared/Svg";
 
 import ManagedTree from "../shared/ManagedTree";
@@ -10,6 +10,7 @@ import SearchInput from "../shared/SearchInput";
 import "./TextSearch.css";
 
 import { getRelativePath } from "../../utils/sources-tree";
+import { highlightMatches } from "./textSearch/utils/highlight";
 
 export default class TextSearch extends Component {
   constructor(props: Props) {
@@ -126,22 +127,7 @@ export default class TextSearch extends Component {
   }
 
   renderMatchValue(lineMatch) {
-    const { value, column, match } = lineMatch;
-    const len = match.length;
-
-    return (
-      <span className="line-value">
-        <span className="line-match" key={0}>
-          {value.slice(0, column)}
-        </span>
-        <span className="query-match" key={1}>
-          {value.substr(column, len)}
-        </span>
-        <span className="line-match" key={2}>
-          {value.slice(column + len, value.length)}
-        </span>
-      </span>
-    );
+    return highlightMatches(lineMatch);
   }
 
   renderResults() {
@@ -159,26 +145,26 @@ export default class TextSearch extends Component {
         : this.renderMatch(item, focused);
     };
 
-    const getFocusedItem = () => {
-      if (this.focusedItem === null) {
-        return results[0] ? results[0].matches[0] : null;
-      }
-      return this.focusedItem.file || this.focusedItem.match;
-    };
-
-    return (
-      <ManagedTree
-        getRoots={() => results}
-        getChildren={file => file.matches || []}
-        itemHeight={24}
-        autoExpand={1}
-        autoExpandDepth={1}
-        focused={getFocusedItem()}
-        getParent={item => null}
-        getPath={getFilePath}
-        renderItem={renderItem}
-      />
-    );
+    if (results.length) {
+      return (
+        <ManagedTree
+          getRoots={() => results}
+          getChildren={file => file.matches || []}
+          itemHeight={24}
+          autoExpand={1}
+          autoExpandDepth={1}
+          getParent={item => null}
+          getPath={getFilePath}
+          renderItem={renderItem}
+        />
+      );
+    } else if (this.props.query && !results.length) {
+      return (
+        <div className="no-result-msg absolute-center">
+          {L10N.getStr("projectTextSearch.noResults")}
+        </div>
+      );
+    }
   }
 
   renderInput() {
@@ -232,5 +218,3 @@ TextSearch.propTypes = {
 TextSearch.contextTypes = {
   shortcuts: PropTypes.object
 };
-
-TextSearch.displayName = "TextSearch";

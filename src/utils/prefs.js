@@ -8,11 +8,10 @@ const prefsSchemaVersion = "1.0.3";
 const pref = Services.pref;
 
 if (isDevelopment()) {
-  pref("devtools.debugger.client-source-maps-enabled", true);
+  pref("devtools.source-map.client-service.enabled", true);
   pref("devtools.debugger.pause-on-exceptions", false);
   pref("devtools.debugger.ignore-caught-exceptions", false);
   pref("devtools.debugger.call-stack-visible", false);
-  pref("devtools.debugger.scopes-visible", false);
   pref("devtools.debugger.start-panel-collapsed", false);
   pref("devtools.debugger.end-panel-collapsed", false);
   pref("devtools.debugger.tabs", "[]");
@@ -24,16 +23,17 @@ if (isDevelopment()) {
   pref("devtools.debugger.file-search-whole-word", false);
   pref("devtools.debugger.file-search-regex-match", false);
   pref("devtools.debugger.prefs-schema-version", "1.0.1");
-  pref("devtools.debugger.project-text-search-enabled", true);
+  pref("devtools.debugger.features.project-text-search", true);
   pref("devtools.debugger.features.async-stepping", true);
+  pref("devtools.debugger.features.wasm", true);
+  pref("devtools.debugger.features.shortcuts", true);
 }
 
 export const prefs = new PrefsHelper("devtools", {
-  clientSourceMapsEnabled: ["Bool", "debugger.client-source-maps-enabled"],
+  clientSourceMapsEnabled: ["Bool", "source-map.client-service.enabled"],
   pauseOnExceptions: ["Bool", "debugger.pause-on-exceptions"],
   ignoreCaughtExceptions: ["Bool", "debugger.ignore-caught-exceptions"],
   callStackVisible: ["Bool", "debugger.call-stack-visible"],
-  scopesVisible: ["Bool", "debugger.scopes-visible"],
   startPanelCollapsed: ["Bool", "debugger.start-panel-collapsed"],
   endPanelCollapsed: ["Bool", "debugger.end-panel-collapsed"],
   frameworkGroupingOn: ["Bool", "debugger.ui.framework-grouping-on"],
@@ -48,8 +48,10 @@ export const prefs = new PrefsHelper("devtools", {
 });
 
 export const features = new PrefsHelper("devtools.debugger.features", {
-  asyncStepping: ["Bool", "async-stepping", true],
-  projectTextSearch: ["Bool", "debugger.project-text-search-enabled", true]
+  asyncStepping: ["Bool", "async-stepping", false],
+  projectTextSearch: ["Bool", "project-text-search", true],
+  wasm: ["Bool", "wasm", true],
+  shortcuts: ["Bool", "shortcuts", false]
 });
 
 if (prefs.debuggerPrefsSchemaVersion !== prefsSchemaVersion) {

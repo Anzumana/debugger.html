@@ -1,5 +1,6 @@
 // @flow
-import React, { Component, PropTypes } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import classnames from "classnames";
@@ -53,7 +54,8 @@ function getKey(action) {
 }
 
 function getKeyForOS(os, action) {
-  return KEYS[os][action];
+  const osActions = KEYS[os] || KEYS.Linux;
+  return osActions[action];
 }
 
 function formatKey(action) {
@@ -82,8 +84,6 @@ function debugBtn(onClick, type, className, tooltip, disabled = false) {
     </button>
   );
 }
-
-debugBtn.displayName = "CommandBarButton";
 
 class CommandBar extends Component {
   props: {
@@ -252,8 +252,6 @@ class CommandBar extends Component {
 CommandBar.contextTypes = {
   shortcuts: PropTypes.object
 };
-
-CommandBar.displayName = "CommandBar";
 
 export default connect(
   state => {

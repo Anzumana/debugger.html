@@ -224,7 +224,7 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
@@ -659,7 +659,7 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
@@ -1111,7 +1111,7 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
@@ -1307,7 +1307,7 @@ ShallowWrapper {
     <div
         className="pane-info empty"
     >
-        Not Paused
+        Not paused
     </div>
 </div>,
   "nodes": Array [
@@ -1317,7 +1317,7 @@ ShallowWrapper {
       <div
             className="pane-info empty"
       >
-            Not Paused
+            Not paused
       </div>
 </div>,
   ],
@@ -1375,14 +1375,14 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
           <div
                     className="pane-info empty"
           >
-                    Not Paused
+                    Not paused
           </div>
 </div>,
         "_debugID": 2,
@@ -1392,7 +1392,7 @@ ShallowWrapper {
           <div
                     className="pane-info empty"
           >
-                    Not Paused
+                    Not paused
           </div>
 </div>,
       },
@@ -1548,7 +1548,7 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
@@ -1840,7 +1840,7 @@ ShallowWrapper {
         className="show-more"
         onClick={[Function]}
     >
-        Collapse Rows
+        Collapse rows
     </div>
 </div>,
   "nodes": Array [
@@ -2043,7 +2043,7 @@ ShallowWrapper {
             className="show-more"
             onClick={[Function]}
       >
-            Collapse Rows
+            Collapse rows
       </div>
 </div>,
   ],
@@ -2171,7 +2171,7 @@ ShallowWrapper {
       "_pendingForceUpdate": false,
       "_pendingReplaceState": false,
       "_pendingStateQueue": null,
-      "_renderedComponent": Object {
+      "_renderedComponent": NoopInternalComponent {
         "_currentElement": <div
           className="pane frames"
 >
@@ -2371,7 +2371,7 @@ ShallowWrapper {
                     className="show-more"
                     onClick={[Function]}
           >
-                    Collapse Rows
+                    Collapse rows
           </div>
 </div>,
         "_debugID": 6,
@@ -2574,7 +2574,7 @@ ShallowWrapper {
                     className="show-more"
                     onClick={[Function]}
           >
-                    Collapse Rows
+                    Collapse rows
           </div>
 </div>,
       },

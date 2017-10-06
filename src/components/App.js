@@ -1,9 +1,13 @@
 // @flow
 
-import React, { PropTypes, Component } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
+import { features } from "../utils/prefs";
 import actions from "../actions";
+import { ShortcutsModal } from "./ShortcutsModal";
+
 import {
   getSelectedSource,
   getPaneCollapse,
@@ -14,6 +18,11 @@ import { isVisible } from "../utils/ui";
 
 import { KeyShortcuts } from "devtools-modules";
 const shortcuts = new KeyShortcuts({ window });
+
+import { Services } from "devtools-modules";
+const { appinfo } = Services;
+
+const isMacOS = appinfo.OS === "Darwin";
 
 const verticalLayoutBreakpoint = window.matchMedia("(min-width: 800px)");
 
@@ -50,6 +59,7 @@ type Props = {
 
 class App extends Component {
   state: {
+    shortcutsModalEnabled: boolean,
     horizontal: boolean,
     startPanelSize: number,
     endPanelSize: number
@@ -62,10 +72,12 @@ class App extends Component {
   renderVerticalLayout: Function;
   toggleSymbolModal: Function;
   onEscape: Function;
+  onCommandSlash: Function;
 
   constructor(props) {
     super(props);
     this.state = {
+      shortcutsModalEnabled: false,
       horizontal: verticalLayoutBreakpoint.matches,
       startPanelSize: 0,
       endPanelSize: 0
@@ -77,6 +89,7 @@ class App extends Component {
     this.renderEditorPane = this.renderEditorPane.bind(this);
     this.renderVerticalLayout = this.renderVerticalLayout.bind(this);
     this.onEscape = this.onEscape.bind(this);
+    this.onCommandSlash = this.onCommandSlash.bind(this);
   }
 
   getChildContext() {
@@ -90,6 +103,7 @@ class App extends Component {
       this.toggleSymbolModal
     );
     shortcuts.on("Escape", this.onEscape);
+    shortcuts.on("Cmd+/", this.onCommandSlash);
   }
 
   componentWillUnmount() {
@@ -110,6 +124,10 @@ class App extends Component {
     }
   }
 
+  onCommandSlash() {
+    this.toggleShortcutsModal();
+  }
+
   toggleSymbolModal(_, e: SyntheticEvent) {
     const {
       selectedSource,
@@ -118,12 +136,12 @@ class App extends Component {
       setActiveSearch
     } = this.props;
 
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!selectedSource) {
       return;
     }
-
-    e.preventDefault();
-    e.stopPropagation();
 
     if (activeSearch == "symbol") {
       return closeActiveSearch();
@@ -166,6 +184,12 @@ class App extends Component {
     );
   }
 
+  toggleShortcutsModal() {
+    this.setState({
+      shortcutsModalEnabled: !this.state.shortcutsModalEnabled
+    });
+  }
+
   renderHorizontalLayout() {
     const { startPanelCollapsed, endPanelCollapsed } = this.props;
     const { horizontal } = this.state;
@@ -192,7 +216,12 @@ class App extends Component {
             onResizeEnd={size => this.setState({ endPanelSize: size })}
             endPanelControl={true}
             startPanel={this.renderEditorPane()}
-            endPanel={<SecondaryPanes horizontal={horizontal} />}
+            endPanel={
+              <SecondaryPanes
+                horizontal={horizontal}
+                toggleShortcutsModal={() => this.toggleShortcutsModal()}
+              />
+            }
             endPanelCollapsed={endPanelCollapsed}
             vert={horizontal}
           />
@@ -246,21 +275,34 @@ class App extends Component {
     );
   }
 
+  renderShortcutsModal() {
+    const additionalClass = isMacOS ? "mac" : "";
+
+    if (!features.shortcuts) {
+      return;
+    }
+
+    return (
+      <ShortcutsModal
+        additionalClass={additionalClass}
+        enabled={this.state.shortcutsModalEnabled}
+        handleClose={() => this.toggleShortcutsModal()}
+      />
+    );
+  }
+
   render() {
     return (
       <div className="debugger">
-        {this.state.horizontal ? (
-          this.renderHorizontalLayout()
-        ) : (
-          this.renderVerticalLayout()
-        )}
+        {this.state.horizontal
+          ? this.renderHorizontalLayout()
+          : this.renderVerticalLayout()}
         {this.renderSymbolModal()}
+        {this.renderShortcutsModal()}
       </div>
     );
   }
 }
-
-App.displayName = "App";
 
 App.childContextTypes = { shortcuts: PropTypes.object };
 

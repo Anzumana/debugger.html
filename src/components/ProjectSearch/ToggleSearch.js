@@ -1,4 +1,5 @@
-import React, { Component, PropTypes } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import classnames from "classnames";
 
 export default class ToggleSearch extends Component {
@@ -28,5 +29,3 @@ ToggleSearch.propTypes = {
   kind: PropTypes.string.isRequired,
   toggle: PropTypes.func.isRequired
 };
-
-ToggleSearch.displayName = "ToggleSearch";

@@ -3,25 +3,22 @@
 import React, { Component } from "react";
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
-import classnames from "classnames";
 import actions from "../../actions";
 import { getSelectedSource, getSymbols } from "../../selectors";
-import { isEnabled } from "devtools-config";
 import "./Outline.css";
 import PreviewFunction from "../shared/PreviewFunction";
 
 import type {
   SymbolDeclarations,
   SymbolDeclaration
-} from "../../utils/parser/getSymbols";
-import type { AstLocation } from "../../utils/parser/types";
+} from "../../workers/parser/getSymbols";
+import type { AstLocation } from "../../workers/parser/types";
 import type { SourceRecord } from "../../reducers/sources";
 
 export class Outline extends Component {
   state: any;
 
   props: {
-    isHidden: boolean,
     symbols: SymbolDeclarations,
     selectSource: (string, { line: number }) => void,
     selectedSource: ?SourceRecord
@@ -35,6 +32,14 @@ export class Outline extends Component {
     const selectedSourceId = selectedSource.get("id");
     const startLine = location.start.line;
     selectSource(selectedSourceId, { line: startLine });
+  }
+
+  renderPlaceholder() {
+    return (
+      <div className="outline-pane-info">
+        {L10N.getStr("outline.noFunctions")}
+      </div>
+    );
   }
 
   renderFunction(func: SymbolDeclaration) {
@@ -51,29 +56,30 @@ export class Outline extends Component {
     );
   }
 
-  renderFunctions() {
-    const { symbols } = this.props;
-
-    return symbols.functions
-      .filter(func => func.name != "anonymous")
-      .map(func => this.renderFunction(func));
+  renderFunctions(symbols: Array<SymbolDeclaration>) {
+    return (
+      <ul className="outline-list">
+        {symbols.map(func => this.renderFunction(func))}
+      </ul>
+    );
   }
 
   render() {
-    const { isHidden } = this.props;
-    if (!isEnabled("outline")) {
-      return null;
-    }
+    const { symbols } = this.props;
+
+    const symbolsToDisplay = symbols.functions.filter(
+      func => func.name != "anonymous"
+    );
 
     return (
-      <div className={classnames("outline", { hidden: isHidden })}>
-        <ul className="outline-list">{this.renderFunctions()}</ul>
+      <div className="outline">
+        {symbolsToDisplay.length > 0
+          ? this.renderFunctions(symbolsToDisplay)
+          : this.renderPlaceholder()}
       </div>
     );
   }
 }
-
-Outline.displayName = "Outline";
 
 export default connect(
   state => {

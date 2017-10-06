@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import PropTypes from "prop-types";
+import React from "react";
 import { storiesOf } from "@storybook/react";
 import { Workers } from "../SecondaryPanes/Workers";
 import { L10N } from "devtools-launchpad";
@@ -34,8 +35,6 @@ function WorkersFactory(workers, { dir = "ltr", theme = "dark" } = {}) {
   );
 }
 
-WorkersFactory.displayName = "Workers";
-
 WorkersFactory.propTypes = {
   dir: PropTypes.string,
   theme: PropTypes.string
@@ -46,5 +45,5 @@ storiesOf("Workers", module)
     return WorkersFactory([]);
   })
   .add("one worker", () => {
-    return WorkersFactory(["http://domain.com/foo"]);
+    return WorkersFactory([{ url: "http://domain.com/foo" }]);
   });

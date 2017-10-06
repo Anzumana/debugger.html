@@ -2,6 +2,7 @@
 
 import { toPairs } from "lodash";
 import { get } from "lodash";
+import { simplifyDisplayName } from "./frame";
 import type { Frame, Pause, Scope } from "debugger-html";
 
 type ScopeData = {
@@ -21,6 +22,41 @@ function getBindingVariables(bindings, parentName) {
     path: `${parentName}/${binding[0]}`,
     contents: binding[1]
   }));
+}
+
+function getSourceBindingVariables(
+  bindings,
+  sourceBindings: {
+    [originalName: string]: string
+  },
+  parentName: string
+) {
+  const result = getBindingVariables(bindings, parentName);
+  const index: any = Object.create(null);
+  result.forEach(entry => {
+    index[entry.name] = { used: false, entry };
+  });
+  // Find and replace variables that is present in sourceBindings.
+  const bound = Object.keys(sourceBindings).map(name => {
+    const generatedName = sourceBindings[name];
+    const foundMap = index[generatedName];
+    let contents;
+    if (foundMap) {
+      foundMap.used = true;
+      contents = foundMap.entry.contents;
+    } else {
+      contents = { value: { type: "undefined" } };
+    }
+    return {
+      name,
+      generatedName,
+      path: `${parentName}/${generatedName}`,
+      contents
+    };
+  });
+  // Use rest of them (not found in the sourceBindings) as is.
+  const unused = result.filter(entry => !index[entry.name].used);
+  return bound.concat(unused);
 }
 
 export function getSpecialVariables(pauseInfo: Pause, path: string) {
@@ -94,14 +130,19 @@ export function getScopes(
     const key = `${actor}-${scopeIndex}`;
     if (type === "function" || type === "block") {
       const bindings = scope.bindings;
+      const sourceBindings = scope.sourceBindings;
       let title;
       if (type === "function") {
-        title = scope.function.displayName || "(anonymous)";
+        title = scope.function.displayName
+          ? simplifyDisplayName(scope.function.displayName)
+          : L10N.getStr("anonymous");
       } else {
         title = L10N.getStr("scopes.block");
       }
 
-      let vars = getBindingVariables(bindings, key);
+      let vars = sourceBindings
+        ? getSourceBindingVariables(bindings, sourceBindings, key)
+        : getBindingVariables(bindings, key);
 
       // show exception, return, and this variables in innermost scope
       if (scope.actor === pausedScopeActor) {

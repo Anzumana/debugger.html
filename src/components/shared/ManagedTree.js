@@ -22,11 +22,12 @@ type Props = {
   itemHeight: number,
   listItems?: Array<Item>,
   onFocus?: (item: any) => void,
-  onExpand?: (item: any) => void,
-  onCollapse?: (item: any) => void,
+  onExpand?: (item: any, expanded: Set<Item>) => void,
+  onCollapse?: (item: any, expanded: Set<Item>) => void,
   renderItem: any,
   disabledFocus?: boolean,
-  focused?: any
+  focused?: any,
+  expanded?: any
 };
 
 type ManagedTreeState = {
@@ -38,17 +39,13 @@ class ManagedTree extends Component {
   state: ManagedTreeState;
   props: Props;
 
-  constructor() {
+  constructor(props: Props) {
     super();
 
     this.state = {
-      expanded: new Set(),
+      expanded: props.expanded || new Set(),
       focusedItem: null
     };
-
-    const self: any = this;
-    self.setExpanded = this.setExpanded.bind(this);
-    self.focusItem = this.focusItem.bind(this);
   }
 
   componentWillReceiveProps(nextProps: Props) {
@@ -71,7 +68,7 @@ class ManagedTree extends Component {
     }
   }
 
-  setExpanded(item: Item, isExpanded: boolean) {
+  setExpanded = (item: Item, isExpanded: boolean) => {
     const expanded = this.state.expanded;
     const itemPath = this.props.getPath(item);
     if (isExpanded) {
@@ -82,11 +79,11 @@ class ManagedTree extends Component {
     this.setState({ expanded });
 
     if (isExpanded && this.props.onExpand) {
-      this.props.onExpand(item);
-    } else if (!expanded && this.props.onCollapse) {
-      this.props.onCollapse(item);
+      this.props.onExpand(item, expanded);
+    } else if (!isExpanded && this.props.onCollapse) {
+      this.props.onCollapse(item, expanded);
     }
-  }
+  };
 
   expandListItems(listItems: Array<Item>) {
     const expanded = this.state.expanded;
@@ -111,7 +108,7 @@ class ManagedTree extends Component {
     }
   }
 
-  focusItem(item: Item) {
+  focusItem = (item: Item) => {
     if (!this.props.disabledFocus && this.state.focusedItem !== item) {
       this.setState({ focusedItem: item });
 
@@ -119,7 +116,7 @@ class ManagedTree extends Component {
         this.props.onFocus(item);
       }
     }
-  }
+  };
 
   render() {
     const { expanded, focusedItem } = this.state;
@@ -145,9 +142,5 @@ class ManagedTree extends Component {
     );
   }
 }
-
-ManagedTree.displayName = "ManagedTree";
-
-ManagedTree.propTypes = Object.assign({}, Tree.propTypes);
 
 export default ManagedTree;

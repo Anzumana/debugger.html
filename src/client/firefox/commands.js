@@ -37,12 +37,14 @@ type Dependencies = {
   supportsWasm: boolean
 };
 
-function setupCommands(dependencies: Dependencies): void {
+function setupCommands(dependencies: Dependencies): { bpClients: BPClients } {
   threadClient = dependencies.threadClient;
   tabTarget = dependencies.tabTarget;
   debuggerClient = dependencies.debuggerClient;
   supportsWasm = dependencies.supportsWasm;
   bpClients = {};
+
+  return { bpClients };
 }
 
 function resume(): Promise<*> {
@@ -130,7 +132,7 @@ function removeBreakpoint(generatedLocation: Location) {
     const bpClient = bpClients[id];
     if (!bpClient) {
       console.warn("No breakpoint to delete on server");
-      return;
+      return Promise.resolve();
     }
     delete bpClients[id];
     return bpClient.remove();

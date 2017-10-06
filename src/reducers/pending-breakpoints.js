@@ -42,6 +42,9 @@ function update(
 ) {
   switch (action.type) {
     case "ADD_BREAKPOINT": {
+      if (action.breakpoint.hidden) {
+        return state;
+      }
       return addBreakpoint(state, action);
     }
 
@@ -62,6 +65,9 @@ function update(
     }
 
     case "REMOVE_BREAKPOINT": {
+      if (action.breakpoint.hidden) {
+        return state;
+      }
       return removeBreakpoint(state, action);
     }
   }
@@ -106,7 +112,13 @@ function updateBreakpoint(state, action) {
 
 function removeBreakpoint(state, action) {
   const { breakpoint } = action;
+
   const locationId = makePendingLocationId(breakpoint.location);
+  const pendingBp = state.getIn(["pendingBreakpoints", locationId]);
+
+  if (!pendingBp && action.status == "start") {
+    return state.set("pendingBreakpoints", I.Map());
+  }
 
   return state.deleteIn(["pendingBreakpoints", locationId]);
 }

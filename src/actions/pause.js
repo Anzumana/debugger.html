@@ -1,26 +1,52 @@
 // @flow
 
-import { selectSource } from "./sources";
+import { selectSource, ensureParserHasSourceText } from "./sources";
 import { PROMISE } from "../utils/redux/middleware/promise";
 
 import {
   getPause,
+  pausedInEval,
   getLoadedObject,
+  getSource,
   isStepping,
-  getSelectedSource
+  isPaused,
+  getSelectedSource,
+  isEvaluatingExpression
 } from "../selectors";
-import { updateFrameLocations, getPausedPosition } from "../utils/pause";
+import {
+  updateFrameLocations,
+  updateScopeBindings,
+  getPausedPosition
+} from "../utils/pause";
 import { evaluateExpressions } from "./expressions";
 
 import { addHiddenBreakpoint, removeBreakpoint } from "./breakpoints";
 import { getHiddenBreakpointLocation } from "../reducers/breakpoints";
-import * as parser from "../utils/parser";
+import * as parser from "../workers/parser";
 import { features } from "../utils/prefs";
 
 import type { Pause, Frame } from "../types";
 import type { ThunkArgs } from "./types";
 
+import { isGeneratedId } from "devtools-source-map";
+
 type CommandType = string;
+
+async function _getScopeBindings(
+  { dispatch, getState, sourceMaps },
+  generatedLocation,
+  scopes
+) {
+  const { sourceId } = generatedLocation;
+  const sourceRecord = getSource(getState(), sourceId);
+  if (sourceRecord.get("isWasm")) {
+    return scopes;
+  }
+
+  await dispatch(ensureParserHasSourceText(sourceId));
+
+  return await updateScopeBindings(scopes, generatedLocation, sourceMaps);
+}
 
 /**
  * Redux actions for the pause state
@@ -35,14 +61,36 @@ type CommandType = string;
  */
 export function resumed() {
   return ({ dispatch, client, getState }: ThunkArgs) => {
+    if (!isPaused(getState())) {
+      return;
+    }
+
+    const wasPausedInEval = pausedInEval(getState());
+
     dispatch({
       type: "RESUME",
       value: undefined
     });
 
-    if (!isStepping(getState())) {
-      dispatch(evaluateExpressions(null));
+    if (!isStepping(getState()) && !wasPausedInEval) {
+      dispatch(evaluateExpressions());
     }
+  };
+}
+
+export function continueToHere(line: number) {
+  return async function({ dispatch, getState, client, sourceMaps }: ThunkArgs) {
+    const source = getSelectedSource(getState()).toJS();
+
+    await dispatch(
+      addHiddenBreakpoint({
+        line,
+        column: undefined,
+        sourceId: source.id
+      })
+    );
+
+    dispatch(command("resume"));
   };
 }
 
@@ -60,7 +108,14 @@ export function paused(pauseInfo: Pause) {
     frames = await updateFrameLocations(frames, sourceMaps);
     const frame = frames[0];
 
-    const scopes = await client.getFrameScopes(frame);
+    const frameScopes = await client.getFrameScopes(frame);
+    const scopes = !isGeneratedId(frame.location.sourceId)
+      ? await _getScopeBindings(
+          { dispatch, getState, sourceMaps },
+          frame.generatedLocation,
+          frameScopes
+        )
+      : frameScopes;
 
     dispatch({
       type: "PAUSED",
@@ -71,7 +126,14 @@ export function paused(pauseInfo: Pause) {
       loadedObjects: loadedObjects || []
     });
 
-    dispatch(evaluateExpressions(frame.id));
+    const hiddenBreakpointLocation = getHiddenBreakpointLocation(getState());
+    if (hiddenBreakpointLocation) {
+      dispatch(removeBreakpoint(hiddenBreakpointLocation));
+    }
+
+    if (!isEvaluatingExpression(getState())) {
+      dispatch(evaluateExpressions());
+    }
 
     dispatch(
       selectSource(frame.location.sourceId, { line: frame.location.line })
@@ -199,19 +261,27 @@ export function breakOnNext() {
  * @static
  */
 export function selectFrame(frame: Frame) {
-  return async ({ dispatch, client }: ThunkArgs) => {
-    dispatch(evaluateExpressions(frame.id));
-    dispatch(
-      selectSource(frame.location.sourceId, { line: frame.location.line })
-    );
-
-    const scopes = await client.getFrameScopes(frame);
+  return async ({ dispatch, client, getState, sourceMaps }: ThunkArgs) => {
+    const frameScopes = await client.getFrameScopes(frame);
+    const scopes = !isGeneratedId(frame.location.sourceId)
+      ? await _getScopeBindings(
+          { dispatch, getState, sourceMaps },
+          frame.generatedLocation,
+          frameScopes
+        )
+      : frameScopes;
 
     dispatch({
       type: "SELECT_FRAME",
       frame,
       scopes
     });
+
+    dispatch(
+      selectSource(frame.location.sourceId, { line: frame.location.line })
+    );
+
+    dispatch(evaluateExpressions());
   };
 }
 
@@ -249,13 +319,6 @@ export function astCommand(stepType: string) {
 
     const pauseInfo = getPause(getState());
     const source = getSelectedSource(getState()).toJS();
-    const currentHiddenBreakpointLocation = getHiddenBreakpointLocation(
-      getState()
-    );
-
-    if (currentHiddenBreakpointLocation) {
-      dispatch(removeBreakpoint(currentHiddenBreakpointLocation));
-    }
 
     const pausedPosition = await getPausedPosition(pauseInfo, sourceMaps);
 

@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import PropTypes from "prop-types";
+import React from "react";
 import { storiesOf } from "@storybook/react";
 import { L10N } from "devtools-launchpad";
 
@@ -49,7 +50,6 @@ function TextSearchFactory({ dir = "ltr", theme = "dark", ...props }) {
   );
 }
 
-TextSearchFactory.displayName = "TextSearchFactory";
 TextSearchFactory.propTypes = {
   dir: PropTypes.string,
   theme: PropTypes.string

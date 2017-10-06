@@ -1,6 +1,7 @@
-import React, { Component, PropTypes } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 
-import { isPretty, getSourcePath } from "../../utils/source";
+import { isPretty, getSourcePath, isThirdParty } from "../../utils/source";
 import { endTruncateStr } from "../../utils/utils";
 
 import Autocomplete from "../shared/Autocomplete";
@@ -20,11 +21,11 @@ export default class SourceSearch extends Component {
 
   toggleSourceSearch: Function;
 
-  searchResults(sourceMap: SourcesMap) {
-    return sourceMap
+  searchResults(sources: SourcesMap) {
+    return sources
       .valueSeq()
       .toJS()
-      .filter(source => !isPretty(source))
+      .filter(source => !isPretty(source) && !isThirdParty(source))
       .map(source => ({
         value: getSourcePath(source),
         title: getSourcePath(source)
@@ -45,10 +46,7 @@ export default class SourceSearch extends Component {
     } = this.props;
     return (
       <Autocomplete
-        selectItem={(e, result) => {
-          selectSource(result.id);
-          this.props.closeActiveSearch();
-        }}
+        selectItem={(e, result) => selectSource(result.id)}
         close={this.props.closeActiveSearch}
         items={this.searchResults(sources)}
         inputValue={query}
@@ -65,5 +63,3 @@ export default class SourceSearch extends Component {
 SourceSearch.contextTypes = {
   shortcuts: PropTypes.object
 };
-
-SourceSearch.displayName = "SourceSearch";

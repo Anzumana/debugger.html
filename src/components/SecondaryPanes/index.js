@@ -1,7 +1,9 @@
 // @flow
-import React, { PropTypes, Component } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
+import { features } from "../../utils/prefs";
 import ImPropTypes from "react-immutable-proptypes";
 
 import actions from "../../actions";
@@ -24,6 +26,7 @@ import EventListeners from "./EventListeners";
 import Workers from "./Workers";
 import Accordion from "../shared/Accordion";
 import CommandBar from "./CommandBar";
+import UtilsBar from "./UtilsBar";
 
 import _chromeScopes from "./ChromeScopes";
 import _Scopes from "./Scopes";
@@ -53,7 +56,6 @@ function debugBtn(onClick, type, className, tooltip) {
     </button>
   );
 }
-debugBtn.displayName = "DebugButton";
 
 class SecondaryPanes extends Component {
   renderBreakpointsToggle() {
@@ -205,7 +207,6 @@ class SecondaryPanes extends Component {
   renderVerticalLayout() {
     return (
       <SplitBox
-        style={{ width: "100vw" }}
         initialSize="300px"
         minSize={10}
         maxSize="50%"
@@ -216,15 +217,27 @@ class SecondaryPanes extends Component {
     );
   }
 
+  renderUtilsBar() {
+    if (!features.shortcuts) {
+      return;
+    }
+
+    return (
+      <UtilsBar
+        horizontal={this.props.horizontal}
+        toggleShortcutsModal={this.props.toggleShortcutsModal}
+      />
+    );
+  }
+
   render() {
     return (
       <div className="secondary-panes secondary-panes--sticky-commandbar">
         <CommandBar horizontal={this.props.horizontal} />
-        {this.props.horizontal ? (
-          this.renderHorizontalLayout()
-        ) : (
-          this.renderVerticalLayout()
-        )}
+        {this.props.horizontal
+          ? this.renderHorizontalLayout()
+          : this.renderVerticalLayout()}
+        {this.renderUtilsBar()}
       </div>
     );
   }
@@ -237,14 +250,13 @@ SecondaryPanes.propTypes = {
   breakpoints: ImPropTypes.map.isRequired,
   breakpointsDisabled: PropTypes.bool,
   breakpointsLoading: PropTypes.bool,
-  toggleAllBreakpoints: PropTypes.func.isRequired
+  toggleAllBreakpoints: PropTypes.func.isRequired,
+  toggleShortcutsModal: PropTypes.func
 };
 
 SecondaryPanes.contextTypes = {
   shortcuts: PropTypes.object
 };
-
-SecondaryPanes.displayName = "SecondaryPanes";
 
 export default connect(
   state => ({

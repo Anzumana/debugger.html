@@ -11,7 +11,10 @@ import * as ast from "./ast";
 import * as coverage from "./coverage";
 import * as projectTextSearch from "./project-text-search";
 import * as sourceSearch from "./source-search";
+import * as sourceTree from "./source-tree";
 import * as loadSourceText from "./sources/loadSourceText";
+import * as debuggee from "./debuggee";
+import * as toolbox from "./toolbox";
 
 export default Object.assign(
   {},
@@ -26,5 +29,8 @@ export default Object.assign(
   coverage,
   projectTextSearch,
   sourceSearch,
-  loadSourceText
+  sourceTree,
+  loadSourceText,
+  debuggee,
+  toolbox
 );

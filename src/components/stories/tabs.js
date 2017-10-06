@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import PropTypes from "prop-types";
+import React from "react";
 import { storiesOf } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 
@@ -73,7 +74,6 @@ function TabsFactory({ dir = "ltr", theme = "light", ...props }) {
   );
 }
 
-TabsFactory.displayName = "TabsFactory";
 TabsFactory.propTypes = {
   dir: PropTypes.string,
   theme: PropTypes.string

@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import PropTypes from "prop-types";
+import React from "react";
 import { storiesOf } from "@storybook/react";
 import ManagedTree from "../shared/ManagedTree";
 import { L10N } from "devtools-launchpad";
@@ -60,7 +61,6 @@ function ManagedTreeFactory({ dir = "ltr", theme = "dark", ...props }) {
   );
 }
 
-ManagedTreeFactory.displayName = "ManagedTreeFactory";
 ManagedTreeFactory.propTypes = {
   dir: PropTypes.string,
   theme: PropTypes.string

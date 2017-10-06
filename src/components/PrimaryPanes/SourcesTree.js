@@ -2,14 +2,16 @@
 
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
-import React, { PropTypes, Component } from "react";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 import classnames from "classnames";
 import ImPropTypes from "react-immutable-proptypes";
 import { Set } from "immutable";
 import {
   getShownSource,
   getSelectedSource,
-  getDebuggeeUrl
+  getDebuggeeUrl,
+  getExpandedState
 } from "../../selectors";
 
 import {
@@ -17,7 +19,6 @@ import {
   createParentMap,
   isDirectory,
   addToTree,
-  sortEntireTree,
   collapseTree,
   createTree,
   getDirectories
@@ -53,7 +54,6 @@ class SourcesTree extends Component {
   constructor(props) {
     super(props);
     this.state = createTree(this.props.sources, this.props.debuggeeUrl);
-
     this.focusItem = this.focusItem.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.getIcon = this.getIcon.bind(this);
@@ -144,8 +144,7 @@ class SourcesTree extends Component {
       for (const source of newSet) {
         addToTree(uncollapsedTree, source, this.props.debuggeeUrl);
       }
-      const unsortedTree = collapseTree(uncollapsedTree);
-      sourceTree = sortEntireTree(unsortedTree, nextProps.debuggeeUrl);
+      sourceTree = collapseTree(uncollapsedTree);
     }
 
     this.setState({
@@ -166,6 +165,10 @@ class SourcesTree extends Component {
   }
 
   getIcon(item, depth) {
+    if (item.path === "/Webpack") {
+      return <Svg name="webpack" />;
+    }
+
     if (depth === 0) {
       return <Svg name="domain" />;
     }
@@ -178,8 +181,8 @@ class SourcesTree extends Component {
   }
 
   onContextMenu(event, item) {
-    const copySourceUrlLabel = L10N.getStr("copySourceUrl");
-    const copySourceUrlKey = L10N.getStr("copySourceUrl.accesskey");
+    const copySourceUri2Label = L10N.getStr("copySourceUri2");
+    const copySourceUri2Key = L10N.getStr("copySourceUri2.accesskey");
 
     event.stopPropagation();
     event.preventDefault();
@@ -188,33 +191,34 @@ class SourcesTree extends Component {
 
     if (!isDirectory(item)) {
       const source = item.contents.get("url");
-      const copySourceUrl = {
+      const copySourceUri2 = {
         id: "node-menu-copy-source",
-        label: copySourceUrlLabel,
-        accesskey: copySourceUrlKey,
+        label: copySourceUri2Label,
+        accesskey: copySourceUri2Key,
         disabled: false,
         click: () => copyToTheClipboard(source)
       };
 
-      menuOptions.push(copySourceUrl);
+      menuOptions.push(copySourceUri2);
     }
 
     showMenu(event, menuOptions);
   }
 
   renderItem(item, depth, focused, _, expanded, { setExpanded }) {
-    const arrow = (
+    const arrow = nodeHasChildren(item) ? (
       <Svg
         name="arrow"
         className={classnames({
-          expanded: expanded,
-          hidden: !nodeHasChildren(item)
+          expanded: expanded
         })}
         onClick={e => {
           e.stopPropagation();
           setExpanded(item, !expanded);
         }}
       />
+    ) : (
+      <i className="no-arrow" />
     );
 
     const icon = this.getIcon(item, depth);
@@ -229,7 +233,7 @@ class SourcesTree extends Component {
     return (
       <div
         className={classnames("node", { focused })}
-        style={{ [paddingDir]: `${depth * 15}px` }}
+        style={{ [paddingDir]: `${depth * 15 + 5}px` }}
         key={item.path}
         onClick={() => {
           this.selectItem(item);
@@ -237,17 +241,15 @@ class SourcesTree extends Component {
         }}
         onContextMenu={e => this.onContextMenu(e, item)}
       >
-        <div>
-          {arrow}
-          {icon}
-          {item.name}
-        </div>
+        {arrow}
+        {icon}
+        <span className="label"> {item.name} </span>
       </div>
     );
   }
 
   render() {
-    const { isHidden } = this.props;
+    const { setExpandedState, expanded } = this.props;
     const {
       focusedItem,
       sourceTree,
@@ -257,7 +259,6 @@ class SourcesTree extends Component {
     } = this.state;
 
     const isEmpty = sourceTree.contents.length === 0;
-
     const treeProps = {
       key: isEmpty ? "empty" : "full",
       getParent: item => parentMap.get(item),
@@ -265,11 +266,14 @@ class SourcesTree extends Component {
       getRoots: () => sourceTree.contents,
       getPath: item => `${item.path}/${item.name}`,
       itemHeight: 21,
-      autoExpandDepth: 1,
+      autoExpandDepth: expanded ? 0 : 1,
       autoExpandAll: false,
       onFocus: this.focusItem,
       listItems,
       highlightItems,
+      expanded,
+      onExpand: (item, expandedState) => setExpandedState(expandedState),
+      onCollapse: (item, expandedState) => setExpandedState(expandedState),
       renderItem: this.renderItem
     };
 
@@ -290,10 +294,7 @@ class SourcesTree extends Component {
     };
 
     return (
-      <div
-        className={classnames("sources-list", { hidden: isHidden })}
-        onKeyDown={onKeyDown}
-      >
+      <div className="sources-list" onKeyDown={onKeyDown}>
         {tree}
       </div>
     );
@@ -301,22 +302,22 @@ class SourcesTree extends Component {
 }
 
 SourcesTree.propTypes = {
-  isHidden: PropTypes.bool,
   sources: ImPropTypes.map.isRequired,
   selectSource: PropTypes.func.isRequired,
   shownSource: PropTypes.string,
   selectedSource: ImPropTypes.map,
-  debuggeeUrl: PropTypes.string.isRequired
+  debuggeeUrl: PropTypes.string.isRequired,
+  setExpandedState: PropTypes.func,
+  expanded: PropTypes.any
 };
-
-SourcesTree.displayName = "SourcesTree";
 
 export default connect(
   state => {
     return {
       shownSource: getShownSource(state),
       selectedSource: getSelectedSource(state),
-      debuggeeUrl: getDebuggeeUrl(state)
+      debuggeeUrl: getDebuggeeUrl(state),
+      expanded: getExpandedState(state)
     };
   },
   dispatch => bindActionCreators(actions, dispatch)

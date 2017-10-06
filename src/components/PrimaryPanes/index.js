@@ -31,7 +31,7 @@ class PrimaryPanes extends Component {
   renderShortcut: Function;
   selectedPane: String;
   showPane: Function;
-  renderFooter: Function;
+  renderTabs: Function;
   renderChildren: Function;
   state: SourcesState;
   props: Props;
@@ -42,7 +42,7 @@ class PrimaryPanes extends Component {
 
     this.renderShortcut = this.renderShortcut.bind(this);
     this.showPane = this.showPane.bind(this);
-    this.renderFooter = this.renderFooter.bind(this);
+    this.renderTabs = this.renderTabs.bind(this);
   }
 
   showPane(selectedPane: string) {
@@ -80,8 +80,10 @@ class PrimaryPanes extends Component {
     ];
   }
 
-  renderFooter() {
-    return <div className="source-footer">{this.renderOutlineTabs()}</div>;
+  renderTabs() {
+    return (
+      <div className="source-outline-tabs">{this.renderOutlineTabs()}</div>
+    );
   }
 
   renderShortcut() {
@@ -103,33 +105,34 @@ class PrimaryPanes extends Component {
     }
   }
 
-  renderHeader() {
-    return <div className="sources-header">{this.renderShortcut()}</div>;
+  renderOutline() {
+    const { selectSource } = this.props;
+
+    const outlineComp = isEnabled("outline") ? (
+      <Outline selectSource={selectSource} />
+    ) : null;
+
+    return outlineComp;
+  }
+
+  renderSources() {
+    const { sources, selectSource } = this.props;
+    return <SourcesTree sources={sources} selectSource={selectSource} />;
   }
 
   render() {
     const { selectedPane } = this.state;
-    const { sources, selectSource } = this.props;
 
     return (
       <div className="sources-panel">
-        {this.renderHeader()}
-        <SourcesTree
-          sources={sources}
-          selectSource={selectSource}
-          isHidden={selectedPane === "outline"}
-        />
-        <Outline
-          selectSource={selectSource}
-          isHidden={selectedPane === "sources"}
-        />
-        {this.renderFooter()}
+        {this.renderTabs()}
+        {selectedPane === "sources"
+          ? this.renderSources()
+          : this.renderOutline()}
       </div>
     );
   }
 }
-
-PrimaryPanes.displayName = "PrimaryPanes";
 
 export default connect(
   state => ({

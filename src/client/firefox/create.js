@@ -13,19 +13,21 @@ export function createFrame(frame: FramePacket): Frame {
   let title;
   if (frame.type == "call") {
     const c = frame.callee;
-    title = c.name || c.userDisplayName || c.displayName || "(anonymous)";
+    title =
+      c.name || c.userDisplayName || c.displayName || L10N.getStr("anonymous");
   } else {
     title = `(${frame.type})`;
   }
-
+  const location = {
+    sourceId: frame.where.source.actor,
+    line: frame.where.line,
+    column: frame.where.column
+  };
   return {
     id: frame.actor,
     displayName: title,
-    location: {
-      sourceId: frame.where.source.actor,
-      line: frame.where.line,
-      column: frame.where.column
-    },
+    location,
+    generatedLocation: location,
     this: frame.this,
     scope: frame.environment
   };

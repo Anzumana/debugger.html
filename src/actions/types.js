@@ -14,7 +14,7 @@ import type {
 import type { State } from "../reducers/types";
 import type { ActiveSearchType } from "../reducers/ui";
 
-import type { SymbolDeclaration, AstLocation } from "../utils/parser";
+import type { SymbolDeclaration, AstLocation } from "../workers/parser";
 
 /**
  * Flow types
@@ -32,7 +32,8 @@ export type ThunkArgs = {
   dispatch: (action: any) => Promise<any>,
   getState: () => State,
   client: any,
-  sourceMaps: any
+  sourceMaps: any,
+  openLink: (url: string) => void
 };
 
 export type Thunk = ThunkArgs => any;
@@ -203,7 +204,6 @@ type PauseAction =
   | {
       type: "EVALUATE_EXPRESSION",
       input: string,
-      status: string,
       value: Object,
       "@@dispatch/promise": any
     }
@@ -242,6 +242,8 @@ type ASTAction =
   | {
       type: "CLEAR_SELECTION"
     };
+
+export type SourceTreeAction = { type: "SET_EXPANDED_STATE", expanded: any };
 
 export type ProjectTextSearchAction = {
   type: "ADD_QUERY",
